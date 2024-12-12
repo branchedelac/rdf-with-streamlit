@@ -36,8 +36,12 @@ stylesheet = [
 
 
 data_sources = {
-    "Befintlig uppsättning typer": ["https://raw.githubusercontent.com/libris/definitions/refs/heads/develop/source/vocab/things.ttl"],
-    "Typupsättning under arbete": ["https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/things.ttl"],
+    "Befintlig uppsättning typer": [
+        "https://raw.githubusercontent.com/libris/definitions/refs/heads/develop/source/vocab/things.ttl"
+    ],
+    "Typupsättning under arbete": [
+        "https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/things.ttl"
+    ],
     "Avant garde": [
         "https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/things.ttl",
         "https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/newtypes/classes.ttl",
@@ -57,7 +61,11 @@ with st.form("my_form"):
         st.write("Designa din visualisering...")
         source_list = st.selectbox(
             "Välj en datakälla!",
-            ("Befintlig uppsättning typer", "Typupsättning under arbete", "Avant garde"),
+            (
+                "Befintlig uppsättning typer",
+                "Typupsättning under arbete",
+                "Avant garde",
+            ),
         )
 
         cy_style = st.selectbox(
@@ -76,6 +84,10 @@ with st.form("my_form"):
 if st.session_state.submitted:
     st.write(f"Vald datakälla: {data_sources[source_list]}")
     st.write(f"Vald visualiseringsstil: {cy_style}")
+
+    st.write(
+        "\nObservera att visualiseringen som genereras nedan visar enbart klasser som är underklasser på första eller andra nivån till Work (_rdfs:subClassOf :Work_)."
+    )
 
     ### App functionality
     elements = [{"data": {"id": "work", "label": "Work"}}]
