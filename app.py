@@ -86,7 +86,7 @@ if st.session_state.submitted:
     st.write(f"Vald visualiseringsstil: {cy_style}")
 
     st.write(
-        "\nObservera att visualiseringen som genereras nedan visar enbart klasser som är underklasser på första eller andra nivån till Work (_rdfs:subClassOf :Work_)."
+        "\nObservera att visualiseringen enabrt visar klasser som är underklasser på första eller andra nivån till Work (_rdfs:subClassOf :Work_)."
     )
 
     ### App functionality
