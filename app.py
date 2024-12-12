@@ -35,75 +35,87 @@ stylesheet = [
 ]
 
 
-data_sources = {"Befintlig uppsättning typer": "https://raw.githubusercontent.com/libris/definitions/refs/heads/develop/source/vocab/things.ttl",
-                "Typupsättning under arbete": "https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/things.ttl"}
+data_sources = {
+    "Befintlig uppsättning typer": ["https://raw.githubusercontent.com/libris/definitions/refs/heads/develop/source/vocab/things.ttl"],
+    "Typupsättning under arbete": ["https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/things.ttl"],
+    "Avant garde": [
+        "https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/things.ttl",
+        "https://raw.githubusercontent.com/libris/definitions/refs/heads/feature/typenormalization/source/vocab/newtypes/classes.ttl",
+    ],
+}
 
 
 ### Streamlit app
 st.set_page_config(layout="wide")
 
 # Initialize session state
-if 'submitted' not in st.session_state:
+if "submitted" not in st.session_state:
     st.session_state.submitted = False
 
 with st.form("my_form"):
     with st.sidebar:
-        st.write(
-            "Designa din visualisering..."
-        )
-        source = st.selectbox(
+        st.write("Designa din visualisering...")
+        source_list = st.selectbox(
             "Välj en datakälla!",
-            ("Befintlig uppsättning typer", "Typupsättning under arbete"),
+            ("Befintlig uppsättning typer", "Typupsättning under arbete", "Avant garde"),
         )
 
         cy_style = st.selectbox(
             "Väl en visualiseringsstil!",
-            ("klay", "cose", "circle","grid","concentric","breadthfirst"),
+            ("klay", "cose", "circle", "grid", "concentric", "breadthfirst"),
         )
 
-        
         # Every form must have a submit button.
         submitted = st.form_submit_button("Visualisera!")
 
         if submitted:
             st.session_state.submitted = True
             st.session_state.cy_style = cy_style
-            st.session_state.source = source
+            st.session_state.source_list = source_list
 
 if st.session_state.submitted:
-    st.write(f"Vald datakälla: {data_sources[source]}")
+    st.write(f"Vald datakälla: {data_sources[source_list]}")
     st.write(f"Vald visualiseringsstil: {cy_style}")
-
 
     ### App functionality
     elements = [{"data": {"id": "work", "label": "Work"}}]
     g = Graph()
-    g.parse(data_sources[source],format="turtle")
 
-    # Query for subjects with predicate rdf:subClassOf and object ns.Work
-    subjects = list(g.subjects(predicate=rdfs.subClassOf, object=ns.Work))
-    message = f'Den valda datakällan innehåller {len(subjects)} direkta underklasser till Work.'
+    for source in data_sources[source_list]:
+        g.parse(source, format="turtle")
+        # Query for subjects with predicate rdf:subClassOf and object ns.Work
+        subjects = list(g.subjects(predicate=rdfs.subClassOf, object=ns.Work))
+        message = f"Den valda datakällan innehåller {len(subjects)} direkta underklasser till Work."
 
-    for subject in subjects:
-        # If the labels are more than one (eg @sv and @en)
-        # you can either return one ("any") or get a uniqueness error
-        label = g.value(subject, rdfs.label, any=True)
-        elements.extend(
-            [
-                {"data": {"id": subject, "label": label}},
-                {"data": {"source": "work", "target": subject}},
-            ]
-        )
-        child_subjects = list(g.subjects(predicate=rdfs.subClassOf, object=subject))
-        for child_subject in child_subjects:
-            child_label = g.value(child_subject, rdfs.label, any=True)
+        for subject in subjects:
+            # If the labels are more than one (eg @sv and @en)
+            # you can either return one ("any") or get a uniqueness error
+            label = g.value(subject, rdfs.label, any=True)
             elements.extend(
                 [
-                    {"data": {"id": child_subject, 
-                                "label": child_label if child_label else f"[{child_subject.lstrip("https://id.kb.se/vocab/")}]"}},
-                    {"data": {"source": subject, "target": child_subject}}
+                    {"data": {"id": subject, "label": label}},
+                    {"data": {"source": "work", "target": subject}},
                 ]
+            )
+            child_subjects = list(g.subjects(predicate=rdfs.subClassOf, object=subject))
+            for child_subject in child_subjects:
+                child_label = g.value(child_subject, rdfs.label, any=True)
+                elements.extend(
+                    [
+                        {
+                            "data": {
+                                "id": child_subject,
+                                "label": (
+                                    child_label
+                                    if child_label
+                                    else f"[{child_subject.lstrip("https://id.kb.se/vocab/")}]"
+                                ),
+                            }
+                        },
+                        {"data": {"source": subject, "target": child_subject}},
+                    ]
                 )
 
-    graph = cytoscape(elements, stylesheet, width="100%", height="600px", layout={"name": cy_style})
-
+    graph = cytoscape(
+        elements, stylesheet, width="100%", height="600px", layout={"name": cy_style}
+    )
